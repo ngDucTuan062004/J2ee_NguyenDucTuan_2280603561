@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::head-extra}, ~{::main-content}, ~{::scripts})}">
+
+<head>
+    <title th:fragment="title">Trang chủ - EduPortal</title>
+    <th:block th:fragment="head-extra"></th:block>
+</head>
+
+<body>
+
+<main th:fragment="main-content">
+
+    <section class="hero-section">
+        <div class="container text-center mt-4">
+            <h1>Khám phá Học phần</h1>
+            <p>Hàng trăm khóa học chất lượng cao từ các giảng viên hàng đầu</p>
+        </div>
+    </section>
+
+    <div class="container py-5">
+
+        <!-- ── BỘ LỌC ── -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <form th:action="@{/home}" method="get" class="row g-3 align-items-end">
+
+                    <!-- Tìm kiếm theo tên -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-search me-1"></i>Tên học phần
+                        </label>
+                        <input type="text"
+                               name="keyword"
+                               class="form-control"
+                               placeholder="Nhập tên học phần..."
+                               th:value="${keyword}">
+                    </div>
+
+                    <!-- Lọc theo danh mục -->
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-tag me-1"></i>Danh mục
+                        </label>
+                        <select name="categoryId" class="form-select">
+                            <option value="">-- Tất cả danh mục --</option>
+                            <option th:each="cat : ${categories}"
+                                    th:value="${cat.id}"
+                                    th:text="${cat.name}"
+                                    th:selected="${cat.id == categoryId}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Lọc theo số tín chỉ -->
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-star me-1"></i>Tín chỉ
+                        </label>
+                        <select name="credits" class="form-select">
+                            <option value="">-- Tất cả --</option>
+                            <option th:each="c : ${#numbers.sequence(1, 10)}"
+                                    th:value="${c}"
+                                    th:text="${c} + ' TC'"
+                                    th:selected="${c == credits}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-filter me-1"></i>Lọc
+                        </button>
+                        <a th:href="@{/home}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-times me-1"></i>Xóa
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- Thông báo kết quả lọc -->
+        <div th:if="${keyword != null and !keyword.isEmpty()
+                       or categoryId != null
+                       or credits != null}"
+             class="alert alert-info mb-4">
+            <i class="fas fa-info-circle me-2"></i>
+            Tìm thấy <strong th:text="${coursePage.totalElements}"></strong> học phần
+            <span th:if="${keyword != null and !keyword.isEmpty()}">
+                &nbsp;·&nbsp; Tên chứa: <strong th:text="${keyword}"></strong>
+            </span>
+            <span th:if="${categoryId != null}">
+                &nbsp;·&nbsp; Danh mục đã chọn
+            </span>
+            <span th:if="${credits != null}">
+                &nbsp;·&nbsp; <strong th:text="${credits}"></strong> tín chỉ
+            </span>
+        </div>
+
+        <!-- Course List -->
+        <div class="row g-4">
+            <div th:each="course : ${coursePage.content}" class="col-md-4">
+                <div class="card h-100">
+
+                    <img th:src="${course.image != null and !course.image.isEmpty()}
+                                 ? '/images/' + ${course.image}
+                                 : @{/images/default-course.png}"
+                         class="card-img-top"
+                         style="width: 100%; height: 200px; object-fit: cover;"
+                         alt="course image">
+
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${course.name}"></h5>
+                        <p>
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <span th:text="${course.lecturer}"></span>
+                        </p>
+                        <p>
+                            <i class="fas fa-star"></i>
+                            <span th:text="${course.credits}"></span> tín chỉ
+                        </p>
+
+                        <sec:authorize access="hasRole('STUDENT')">
+                            <form th:action="@{/enroll/{id}(id=${course.id})}" method="post">
+                                <input type="hidden"
+                                       th:name="${_csrf.parameterName}"
+                                       th:value="${_csrf.token}">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-plus-circle me-1"></i>Đăng ký
+                                </button>
+                            </form>
+                        </sec:authorize>
+
+                        <sec:authorize access="isAnonymous()">
+                            <a th:href="@{/login}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập để đăng ký
+                            </a>
+                        </sec:authorize>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Empty state -->
+            <div th:if="${coursePage.content.isEmpty()}" class="col-12 text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3 d-block"></i>
+                <h5 class="text-muted">Không tìm thấy học phần phù hợp</h5>
+                <a th:href="@{/home}" class="btn btn-outline-primary mt-2">Xem tất cả</a>
+            </div>
+        </div>
+
+        <!-- Pagination — giữ nguyên tham số lọc khi chuyển trang -->
+        <nav th:if="${totalPages > 1}" class="mt-5">
+            <ul class="pagination justify-content-center">
+
+                <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                    <a class="page-link"
+                       th:href="@{/home(page=${currentPage - 1},
+                                       keyword=${keyword},
+                                       categoryId=${categoryId},
+                                       credits=${credits})}">
+                        Previous
+                    </a>
+                </li>
+
+                <li class="page-item"
+                    th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                    th:classappend="${i == currentPage ? 'active' : ''}">
+                    <a class="page-link"
+                       th:href="@{/home(page=${i},
+                                       keyword=${keyword},
+                                       categoryId=${categoryId},
+                                       credits=${credits})}"
+                       th:text="${i + 1}">
+                    </a>
+                </li>
+
+                <li class="page-item"
+                    th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+                    <a class="page-link"
+                       th:href="@{/home(page=${currentPage + 1},
+                                       keyword=${keyword},
+                                       categoryId=${categoryId},
+                                       credits=${credits})}">
+                        Next
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+
+    </div>
+
+</main>
+
+<th:block th:fragment="scripts"></th:block>
+
+</body>
+</html>

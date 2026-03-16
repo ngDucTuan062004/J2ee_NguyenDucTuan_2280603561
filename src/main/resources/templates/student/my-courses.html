@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+th:replace="~{layout/base :: layout(~{::title}, ~{::head-extra}, ~{::main-content}, ~{::scripts})}">
+
+<head>
+
+<title>Khóa học của tôi</title>
+
+<th:block th:fragment="head-extra"></th:block>
+
+</head>
+
+<body>
+
+<main th:fragment="main-content">
+
+<div class="container py-5">
+
+<h2 class="mb-4">Khóa học đã đăng ký</h2>
+
+<div class="row g-4">
+
+<div th:each="enrollment : ${enrollments}"
+     class="col-md-4">
+
+<div class="card h-100 shadow-sm">
+
+<img class="card-img-top"
+     th:src="@{/images/{img}(img=${enrollment.course.image != null ? enrollment.course.image : 'default-course.png'})}"
+     style="height:200px; object-fit:cover;">
+
+<div class="card-body">
+
+<h5 th:text="${enrollment.course.name}"></h5>
+
+<p class="text-muted">
+
+<i class="fas fa-user"></i>
+
+<span th:text="${enrollment.course.lecturer}"></span>
+
+</p>
+
+<p>
+
+<i class="fas fa-star text-warning"></i>
+
+<span th:text="${enrollment.course.credits}"></span> tín chỉ
+
+</p>
+
+<small class="text-muted">
+
+Ngày đăng ký:
+<span th:text="${enrollment.enrollDate}"></span>
+
+</small>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</main>
+
+<th:block th:fragment="scripts"></th:block>
+
+</body>
+</html>
